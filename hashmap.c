@@ -40,39 +40,119 @@ int is_equal(void* key1, void* key2){
 
 
 void insertMap(HashMap * map, char * key, void * value) {
+    long index = hash(key, map -> capacity) ;
 
+    for (long i = 0 ; i < map -> capacity ; i++) {
+        long pos = (index + i) % map -> capacity ;
+        Pair * inst = map -> buckets[pos] ;
 
+        if (inst == NULL || inst -> key == NULL) {
+            map -> buckets[pos] = createPair(key, value) ;
+            map -> size ++ ;
+            map -> current = pos ;
+        }
+
+        if (inst -> key != NULL && strcmp(inst -> key, key) == 0) {
+            return ;
+        }
+    }
 }
 
 void enlarge(HashMap * map) {
     enlarge_called = 1; //no borrar (testing purposes)
+    
+    Pair ** prevArr = map -> buckets ;
+    long prevCap = map -> capacity ;
 
+    map -> capacity *= 2 ;
+    map -> buckets = (Pair **) malloc (sizeof(Pair *) * map -> capacity) ;
+    for (long i = 0 ; i < map -> capacity ; i++) {
+        map -> buckets[i] = NULL ;
+    }
 
+    map -> size = 0 ;
+    for (long i = 0 ; i < prevCap ; i++) {
+        Pair *pair = prevArr[i] ;
+        if (pair != NULL && pair -> key != NULL) {
+            insertMap(map, pair -> key, pair -> value) ;
+        }
+    }
+
+    free(prevArr) ;
 }
 
 
 HashMap * createMap(long capacity) {
+    HashMap *mapa = (HashMap *) malloc (sizeof(HashMap)) ;
+    if (mapa == NULL) return NULL ;
 
-    return NULL;
+    mapa -> buckets = (Pair **) malloc (sizeof(Pair *) * capacity) ;
+    if (mapa -> buckets == NULL) {
+        free(mapa) ;
+        return NULL ;
+    }
+
+    for (long i = 0 ; i < capacity ; i++) {
+        mapa -> buckets[i] = NULL ;
+    }
+
+    mapa -> size = 0 ;
+    mapa -> capacity = capacity ;
+    mapa -> current = -1 ;
+
+    return mapa ;
 }
 
 void eraseMap(HashMap * map,  char * key) {    
+    Pair *pairBusc = searchMap(map, key) ;
 
+    if (pairBusc != NULL) {
+        pairBusc -> key = NULL ;
+        map -> size -- ;
+    }
 
 }
 
 Pair * searchMap(HashMap * map,  char * key) {   
+    long index = hash(key, map -> capacity) ;
 
+    for (long i = 0 ; i < map -> capacity ; i++) {
+        long pos = (index + i) % map -> capacity ;
+        Pair * pair = map -> buckets [pos] ;
 
-    return NULL;
+        if (pair == NULL) {
+            return NULL ;
+        }
+
+        if (pair -> key != NULL && strcmp(pair -> key, key) == 0) {
+            map -> current = pos ;
+            return pair ;
+        }
+    }
+
+    return NULL ;
 }
 
 Pair * firstMap(HashMap * map) {
+    for (long i = 0 ; i < map -> capacity ; i++) {
+        Pair *pair = map -> buckets[i] ;
+        if (pair != NULL && pair -> key != NULL) {
+            map -> current = i ;
+            return pair ;
+        }
+    }
 
-    return NULL;
+    return NULL ;
 }
 
 Pair * nextMap(HashMap * map) {
+    for (long i = map -> current + 1 ; i < map -> capacity ; i++) {
+        Pair *pair = map -> buckets[i] ;
+        if (pair != NULL && pair -> key != NULL) {
+            map -> current = i ;
+            return pair ;
+        }
+    }
 
     return NULL;
 }
